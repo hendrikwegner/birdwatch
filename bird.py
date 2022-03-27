@@ -41,11 +41,9 @@ bot = telegram.Bot(token=telegram_bot_token)
 bot.send_message(chat_id=telegram_private, text='Starting!', disable_notification=True )
 
 with open('app.logs', 'a') as f:
-    f.write('Starting: ' + datetime.now())
+    f.write('Starting: ' + str(datetime.now() + timedelta(hours=2)))
     f.write('\n')
-    f.write('Available TPU Devices: ' + list_edge_tpus())
-
-print(list_edge_tpus())
+    f.write('Available TPU Devices: ' + str(list_edge_tpus()))
 
 #mqtt connect
 def on_connect(client, userdata, flags, rc):
@@ -115,7 +113,7 @@ def inference(image_path, data):
         normalized_input = (np.asarray(image) - mean) / (std * scale) + zero_point
         np.clip(normalized_input, 0, 255, out=normalized_input)
         common.set_input(interpreter, normalized_input.astype(np.uint8))
-
+        
     # Run inference
     print('----INFERENCE TIME----')
     for _ in range(3):
@@ -132,7 +130,6 @@ def inference(image_path, data):
         print('%s: %.5f' % (labels.get(c.id, c.id), c.score))
         
         f = open("app.logs", "a")
-        now = datetime.now() + timedelta(hours=1)
         f.write('%s: %.5f' % (labels.get(c.id, c.id), c.score) + '\n')
         f.close()
         bot.send_photo(chat_id=telegram_private, photo=open(image_path, 'rb'), caption='%s: %.5f' % (labels.get(c.id, c.id), c.score))
@@ -165,9 +162,8 @@ try:
 
 except Exception as e:
     bot.send_message(chat_id=telegram_private, text='Bot crashed!', disable_notification=True)
-    print(e)
     with open('app.logs', 'a') as f:
-        f.write('ERROR!: ' + e)
+        f.write('ERROR!: ' + str(e))
     client.disconnect()
     client.loop_stop()
 
