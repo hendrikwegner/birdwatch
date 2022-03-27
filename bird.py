@@ -5,6 +5,9 @@ import json
 import requests
 import base64
 import paho.mqtt.client as mqttClient
+import socket
+print()
+
 
 import numpy as np
 from PIL import Image
@@ -118,7 +121,7 @@ def inference(image_path, data):
 
 Connected = False   #global variable for the state of the connection
 try:
-    client = mqttClient.Client("unraid-lambo")               #create new instance
+    client = mqttClient.Client(socket.gethostname())               #create new instance
     client.username_pw_set(mqtt_user, password=mqtt_password)    #set username and password
     client.on_connect= on_connect                      #attach function to callback
     client.on_message= on_message                      #attach function to callback
