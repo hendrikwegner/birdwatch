@@ -39,6 +39,18 @@ debug_mode = bool(getEnv("DEBUG_MODE", False))
 
 bot = telegram.Bot(token=telegram_bot_token)
 bot.send_message(chat_id=telegram_private, text='Starting!', disable_notification=True )
+
+f = open("app.logs", "a")
+now = datetime.now() + timedelta(hours=1)
+f.write('%s: %.5f' % (labels.get(c.id, c.id), c.score) + '\n')
+f.close()
+
+with open('app.logs', 'a') as f:
+    f.write('Starting: ' + now)
+    f.write('\n')
+    f.write('Available TPU Devices: ' + list_edge_tpus())
+
+
 print(list_edge_tpus())
 
 #mqtt connect
@@ -157,8 +169,11 @@ try:
         client.disconnect()
         client.loop_stop()
 
-except:
+except Exception as e:
     bot.send_message(chat_id=telegram_private, text='Bot crashed!', disable_notification=True)
+    print(e)
+    with open('app.logs', 'a') as f:
+        f.write('ERROR!: ' + e)
     client.disconnect()
     client.loop_stop()
 
