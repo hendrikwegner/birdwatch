@@ -41,7 +41,7 @@ bot = telegram.Bot(token=telegram_bot_token)
 bot.send_message(chat_id=telegram_private, text='Starting!', disable_notification=True )
 
 with open('app.logs', 'a') as f:
-    f.write('Starting: ' + now)
+    f.write('Starting: ' + datetime.now())
     f.write('\n')
     f.write('Available TPU Devices: ' + list_edge_tpus())
 
