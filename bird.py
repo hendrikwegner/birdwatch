@@ -5,9 +5,6 @@ import json
 import requests
 import base64
 import paho.mqtt.client as mqttClient
-import socket
-print()
-
 
 import numpy as np
 from PIL import Image
@@ -24,9 +21,14 @@ telegram_private = os.getenv("TELEGRAM_PRIVATE_ID", '5251738753')
 telegram_group = os.getenv("TELEGRAM_GROUP_ID", '-799191878')
 frigate_endpoint = os.getenv("FRIGATE_ENDPOINT", '192.168.123.4:5000')
 mqtt_endpoint_host = os.getenv("MQTT_ENDPOINT_HOST", '192.168.123.4')
-mqtt_endpoint_port = os.getenv("MQTT_ENDPOINT_PORT", 1883)
+mqtt_endpoint_port = int(os.getenv("MQTT_ENDPOINT_PORT", 1883))
 mqtt_user = os.getenv("MQTT_USER", 'hendrik')
 mqtt_password = os.getenv("MQTT_PASSWORD", 'hendrikmqtt')
+
+use_tpu_usb = os.getenv("USE_TPU_USB", False)
+use_tpu_pci = os.getenv("USE_TPU_PCI", False)
+
+debug_mode = os.getenv("DEBUG_MODE", False)
 
 bot = telegram.Bot(token=telegram_bot_token)
 bot.send_message(chat_id=telegram_private, text='Starting!', disable_notification=True )
@@ -62,9 +64,13 @@ def on_message(client, userdata, message):
 #run birb detection
 def inference(image_path, data):
     
-    
-    labels = read_label_file('./models/labels.txt') 
-    interpreter = make_interpreter('./models/birds.tflite', device="usb")
+    labels = read_label_file('./models/labels.txt')
+    if use_tpu_usb:
+        interpreter = make_interpreter('./models/birds.tflite', device="usb")
+    elif use_tpu_pci:
+        interpreter = make_interpreter('./models/birds.tflite', device="pci")
+    else:
+        interpreter = make_interpreter('./models/birds.tflite')
     interpreter.allocate_tensors()
 
     # Model must be uint8 quantized
@@ -121,7 +127,7 @@ def inference(image_path, data):
 
 Connected = False   #global variable for the state of the connection
 try:
-    client = mqttClient.Client(socket.gethostname())               #create new instance
+    client = mqttClient.Client(os.uname()[1])               #create new instance
     client.username_pw_set(mqtt_user, password=mqtt_password)    #set username and password
     client.on_connect= on_connect                      #attach function to callback
     client.on_message= on_message                      #attach function to callback
