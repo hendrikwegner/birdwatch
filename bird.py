@@ -60,8 +60,8 @@ def on_message(client, userdata, message):
 def inference(image_path, data):
     
     
-    labels = read_label_file('/root/labels.txt') 
-    interpreter = make_interpreter('/root/birds.tflite', device="usb")
+    labels = read_label_file('./models/labels.txt') 
+    interpreter = make_interpreter('./models/birds.tflite', device="usb")
     interpreter.allocate_tensors()
 
     # Model must be uint8 quantized
