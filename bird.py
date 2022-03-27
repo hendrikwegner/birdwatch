@@ -16,23 +16,30 @@ from pycoral.utils.edgetpu import list_edge_tpus
 
 import telegram
 
-telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", '5160887123:AAH_MnMpnhfn7N6RsnRAtx2_rImJ75xSII4')
-telegram_private = os.getenv("TELEGRAM_PRIVATE_ID", '5251738753')
-telegram_group = os.getenv("TELEGRAM_GROUP_ID", '-799191878')
-frigate_endpoint = os.getenv("FRIGATE_ENDPOINT", '192.168.123.4:5000')
-mqtt_endpoint_host = os.getenv("MQTT_ENDPOINT_HOST", '192.168.123.4')
-mqtt_endpoint_port = int(os.getenv("MQTT_ENDPOINT_PORT", 1883))
-mqtt_user = os.getenv("MQTT_USER", 'hendrik')
-mqtt_password = os.getenv("MQTT_PASSWORD", 'hendrikmqtt')
+telegram_bot_token = getEnv("TELEGRAM_BOT_TOKEN", '5160887123:AAH_MnMpnhfn7N6RsnRAtx2_rImJ75xSII4')
+telegram_private = getEnv("TELEGRAM_PRIVATE_ID", '5251738753')
+telegram_group = getEnv("TELEGRAM_GROUP_ID", '-799191878')
+frigate_endpoint = getEnv("FRIGATE_ENDPOINT", '192.168.123.4:5000')
+mqtt_endpoint_host = getEnv("MQTT_ENDPOINT_HOST", '192.168.123.4')
+mqtt_endpoint_port = int(getEnv("MQTT_ENDPOINT_PORT", 1883))
+mqtt_user = getEnv("MQTT_USER", 'hendrik')
+mqtt_password = getEnv("MQTT_PASSWORD", 'hendrikmqtt')
 
-use_tpu_usb = bool(os.getenv("USE_TPU_USB", False))
-use_tpu_pci = bool(os.getenv("USE_TPU_PCI", False))
+use_tpu_usb = bool(getEnv("USE_TPU_USB", False))
+use_tpu_pci = bool(getEnv("USE_TPU_PCI", False))
 
-debug_mode = bool(os.getenv("DEBUG_MODE", False))
+debug_mode = bool(getEnv("DEBUG_MODE", False))
 
 bot = telegram.Bot(token=telegram_bot_token)
 bot.send_message(chat_id=telegram_private, text='Starting!', disable_notification=True )
 print(list_edge_tpus())
+
+def getEnv(key, defaultValue):
+    value = os.getenv(key)
+    if (len(value) == 0):
+        return defaultValue
+    return value
+
 
 #mqtt connect
 def on_connect(client, userdata, flags, rc):
