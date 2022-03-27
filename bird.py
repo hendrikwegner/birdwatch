@@ -16,6 +16,13 @@ from pycoral.utils.edgetpu import list_edge_tpus
 
 import telegram
 
+def getEnv(key, defaultValue):
+    value = os.getenv(key)
+    if value is None or (len(value) == 0):
+        return defaultValue
+    return value
+
+
 telegram_bot_token = getEnv("TELEGRAM_BOT_TOKEN", '5160887123:AAH_MnMpnhfn7N6RsnRAtx2_rImJ75xSII4')
 telegram_private = getEnv("TELEGRAM_PRIVATE_ID", '5251738753')
 telegram_group = getEnv("TELEGRAM_GROUP_ID", '-799191878')
@@ -33,13 +40,6 @@ debug_mode = bool(getEnv("DEBUG_MODE", False))
 bot = telegram.Bot(token=telegram_bot_token)
 bot.send_message(chat_id=telegram_private, text='Starting!', disable_notification=True )
 print(list_edge_tpus())
-
-def getEnv(key, defaultValue):
-    value = os.getenv(key)
-    if (len(value) == 0):
-        return defaultValue
-    return value
-
 
 #mqtt connect
 def on_connect(client, userdata, flags, rc):
