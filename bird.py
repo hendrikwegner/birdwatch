@@ -25,10 +25,10 @@ mqtt_endpoint_port = int(os.getenv("MQTT_ENDPOINT_PORT", 1883))
 mqtt_user = os.getenv("MQTT_USER", 'hendrik')
 mqtt_password = os.getenv("MQTT_PASSWORD", 'hendrikmqtt')
 
-use_tpu_usb = os.getenv("USE_TPU_USB", False)
-use_tpu_pci = os.getenv("USE_TPU_PCI", False)
+use_tpu_usb = bool(os.getenv("USE_TPU_USB", False))
+use_tpu_pci = bool(os.getenv("USE_TPU_PCI", False))
 
-debug_mode = os.getenv("DEBUG_MODE", False)
+debug_mode = bool(os.getenv("DEBUG_MODE", False))
 
 bot = telegram.Bot(token=telegram_bot_token)
 bot.send_message(chat_id=telegram_private, text='Starting!', disable_notification=True )
