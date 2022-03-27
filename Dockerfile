@@ -14,4 +14,6 @@ RUN git clone https://github.com/hendrikwegner/birdwatch.git
 
 WORKDIR /root/birdwatch
 
-CMD [ "python", "./bird.py"]
+RUN git pull
+
+CMD [ "/bin/sh", "./run.sh"]
