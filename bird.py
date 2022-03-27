@@ -21,7 +21,7 @@ telegram_private = os.getenv("TELEGRAM_PRIVATE_ID", '5251738753')
 telegram_group = os.getenv("TELEGRAM_GROUP_ID", '-799191878')
 frigate_endpoint = os.getenv("FRIGATE_ENDPOINT", '192.168.123.4:5000')
 mqtt_endpoint_host = os.getenv("MQTT_ENDPOINT_HOST", '192.168.123.4')
-mqtt_endpoint_port = os.getenv("MQTT_ENDPOINT_PORT", 1883)
+mqtt_endpoint_port = int(os.getenv("MQTT_ENDPOINT_PORT", 1883))
 mqtt_user = os.getenv("MQTT_USER", 'hendrik')
 mqtt_password = os.getenv("MQTT_PASSWORD", 'hendrikmqtt')
 
