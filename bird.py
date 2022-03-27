@@ -44,7 +44,8 @@ with open('app.logs', 'a') as f:
     f.write('Starting: ' + str(datetime.now() + timedelta(hours=2)))
     f.write('\n')
     f.write('Available TPU Devices: ' + str(list_edge_tpus()))
-
+    f.write('\n')
+    
 #mqtt connect
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
