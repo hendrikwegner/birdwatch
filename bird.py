@@ -44,7 +44,8 @@ with open('app.logs', 'a') as f:
     f.write('Starting: ' + str(datetime.now() + timedelta(hours=2)))
     f.write('\n')
     f.write('Available TPU Devices: ' + str(list_edge_tpus()))
-
+    f.write('\n')
+    
 #mqtt connect
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -61,7 +62,7 @@ def on_message(client, userdata, message):
         thumb = "http://"+frigate_endpoint+"/api/events/" + data['before']['id'] + "/thumbnail.jpg"
         r = requests.get(thumb, allow_redirects=True)
         #if (data['before']['camera'] == "Pond"):
-        image = '/root/images/'+data['before']['id']+'.jpg'
+        image = '/root/birdwatch/images/'+data['before']['id']+'.jpg'
         open(image, 'wb').write(r.content)
         #image atleast 100bytes or declare as broken
         if (os.stat(image).st_size > 100):
@@ -130,9 +131,10 @@ def inference(image_path, data):
         print('%s: %.5f' % (labels.get(c.id, c.id), c.score))
         
         f = open("app.logs", "a")
-        f.write('%s: %.5f' % (labels.get(c.id, c.id), c.score) + '\n')
+        f.write('%s: %.5f - ' % (labels.get(c.id, c.id), c.score) + str(datetime.now() + timedelta(hours=2)) + '\n')
         f.close()
-        bot.send_photo(chat_id=telegram_private, photo=open(image_path, 'rb'), caption='%s: %.5f' % (labels.get(c.id, c.id), c.score))
+        if ("background" != labels.get(c.id, c.id)):
+            bot.send_photo(chat_id=telegram_private, photo=open(image_path, 'rb'), caption='%s: %.5f' % (labels.get(c.id, c.id), c.score))
 
 
 Connected = False   #global variable for the state of the connection
@@ -166,4 +168,3 @@ except Exception as e:
         f.write('ERROR!: ' + str(e))
     client.disconnect()
     client.loop_stop()
-
