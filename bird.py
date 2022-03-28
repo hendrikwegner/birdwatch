@@ -5,6 +5,7 @@ import json
 import requests
 import base64
 import paho.mqtt.client as mqttClient
+import logging
 
 import numpy as np
 from PIL import Image
@@ -22,6 +23,7 @@ def getEnv(key, defaultValue):
         return defaultValue
     return value
 
+logging.basicConfig(filename='app.logs', filemode='a', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 telegram_bot_token = getEnv("TELEGRAM_BOT_TOKEN", '5160887123:AAH_MnMpnhfn7N6RsnRAtx2_rImJ75xSII4')
 telegram_private = getEnv("TELEGRAM_PRIVATE_ID", '5251738753')
@@ -40,12 +42,9 @@ debug_mode = bool(getEnv("DEBUG_MODE", False))
 bot = telegram.Bot(token=telegram_bot_token)
 bot.send_message(chat_id=telegram_private, text='Starting!', disable_notification=True )
 
-with open('app.logs', 'a') as f:
-    f.write('Starting: ' + str(datetime.now() + timedelta(hours=2)))
-    f.write('\n')
-    f.write('Available TPU Devices: ' + str(list_edge_tpus()))
-    f.write('\n')
-    
+logging.info('Starting')
+logging.info('Available TPU Devices: ' + str(list_edge_tpus()))
+
 #mqtt connect
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -58,20 +57,18 @@ def on_connect(client, userdata, flags, rc):
 #mqtt message recieved
 def on_message(client, userdata, message):
     data = json.loads(message.payload.decode())
-    if (data['before']['label'] == "bird"):
+    if (data['before']['label'] == "bird") and (data['before']['camera'] == "Pond"):
         thumb = "http://"+frigate_endpoint+"/api/events/" + data['before']['id'] + "/thumbnail.jpg"
         r = requests.get(thumb, allow_redirects=True)
-        #if (data['before']['camera'] == "Pond"):
         image = '/root/birdwatch/images/'+data['before']['id']+'.jpg'
+        logging.info('Writing: ' + image)
         open(image, 'wb').write(r.content)
         #image atleast 100bytes or declare as broken
         if (os.stat(image).st_size > 100):
             inference(image, data)
         else:
-            f = open("app.logs", "a")
-            f.write()
-            f.write(image+' broken!'+'\n')
-            f.close()
+            logging.warning(image+' broken!')
+
 
 #run birb detection
 def inference(image_path, data):
@@ -126,14 +123,12 @@ def inference(image_path, data):
 
     print('-------RESULTS--------')
     for c in classes:
-        if "Heron" in labels.get(c.id, c.id):
+        if ("Heron" in labels.get(c.id, c.id)) and (float(c.score) > 0.4):
             bot.send_photo(chat_id=telegram_group, photo=open(image_path, 'rb'), caption='%s: %.5f' % (labels.get(c.id, c.id), c.score))
         print('%s: %.5f' % (labels.get(c.id, c.id), c.score))
         
-        f = open("app.logs", "a")
-        f.write('%s: %.5f - ' % (labels.get(c.id, c.id), c.score) + str(datetime.now() + timedelta(hours=2)) + '\n')
-        f.close()
-        if ("background" != labels.get(c.id, c.id)):
+        logging.info('%s: %.5f - ' % (labels.get(c.id, c.id), c.score))
+        if ("background" != labels.get(c.id, c.id)) and (float(c.score) > 0.4):
             bot.send_photo(chat_id=telegram_private, photo=open(image_path, 'rb'), caption='%s: %.5f' % (labels.get(c.id, c.id), c.score))
 
 
@@ -164,7 +159,6 @@ try:
 
 except Exception as e:
     bot.send_message(chat_id=telegram_private, text='Bot crashed!', disable_notification=True)
-    with open('app.logs', 'a') as f:
-        f.write('ERROR!: ' + str(e))
+    logging.warning(str(e))
     client.disconnect()
     client.loop_stop()
