@@ -5,7 +5,9 @@ import json
 import requests
 import base64
 import paho.mqtt.client as mqttClient
+
 import logging
+from distutils.util import strtobool
 
 import numpy as np
 from PIL import Image
@@ -23,7 +25,9 @@ def getEnv(key, defaultValue):
         return defaultValue
     return value
 
-logging.basicConfig(filename='app.logs', filemode='a', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+
+logging.basicConfig(filename='app.logs', filemode='a', format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.DEBUG)
+
 
 telegram_bot_token = getEnv("TELEGRAM_BOT_TOKEN", '5160887123:AAH_MnMpnhfn7N6RsnRAtx2_rImJ75xSII4')
 telegram_private = getEnv("TELEGRAM_PRIVATE_ID", '5251738753')
@@ -34,16 +38,16 @@ mqtt_endpoint_port = int(getEnv("MQTT_ENDPOINT_PORT", 1883))
 mqtt_user = getEnv("MQTT_USER", 'hendrik')
 mqtt_password = getEnv("MQTT_PASSWORD", 'hendrikmqtt')
 
-use_tpu_usb = bool(getEnv("USE_TPU_USB", False))
-use_tpu_pci = bool(getEnv("USE_TPU_PCI", False))
+use_tpu_usb = bool(strtobool(getEnv("USE_TPU_USB", False)))
+use_tpu_pci = bool(strtobool(getEnv("USE_TPU_PCI", False)))
 
-debug_mode = bool(getEnv("DEBUG_MODE", False))
+debug_mode = bool(strtobool(getEnv("DEBUG_MODE", False)))
 
 bot = telegram.Bot(token=telegram_bot_token)
-bot.send_message(chat_id=telegram_private, text='Starting!', disable_notification=True )
+bot.send_message(chat_id=telegram_private, text='Starting - Debug Mode: ' + str(debug_mode), disable_notification=True )
 
-logging.info('Starting')
-logging.info('Available TPU Devices: ' + str(list_edge_tpus()))
+logging.debug('Starting - Debug Mode: ' + str(debug_mode))
+logging.debug('Available TPU Devices: ' + str(list_edge_tpus()))
 
 #mqtt connect
 def on_connect(client, userdata, flags, rc):
@@ -61,17 +65,17 @@ def on_message(client, userdata, message):
         thumb = "http://"+frigate_endpoint+"/api/events/" + data['before']['id'] + "/thumbnail.jpg"
         r = requests.get(thumb, allow_redirects=True)
         image = '/root/birdwatch/images/'+data['before']['id']+'.jpg'
-        logging.info('Writing: ' + image)
+        logging.debug('Writing: ' + image)
         open(image, 'wb').write(r.content)
         #image atleast 100bytes or declare as broken
         if (os.stat(image).st_size > 100):
             inference(image, data)
         else:
-            logging.warning(image+' broken!')
+            logging.debug(image+' broken!')
 
 
 #run birb detection
-def inference(image_path, data):
+def inference(image_path):
     
     labels = read_label_file('./models/labels.txt')
     if use_tpu_usb:
@@ -127,38 +131,48 @@ def inference(image_path, data):
             bot.send_photo(chat_id=telegram_group, photo=open(image_path, 'rb'), caption='%s: %.5f' % (labels.get(c.id, c.id), c.score))
         print('%s: %.5f' % (labels.get(c.id, c.id), c.score))
         
-        logging.info('%s: %.5f - ' % (labels.get(c.id, c.id), c.score))
+        logging.debug('%s: %.5f - ' % (labels.get(c.id, c.id), c.score))
         if ("background" != labels.get(c.id, c.id)) and (float(c.score) > 0.4):
             bot.send_photo(chat_id=telegram_private, photo=open(image_path, 'rb'), caption='%s: %.5f' % (labels.get(c.id, c.id), c.score))
 
 
 Connected = False   #global variable for the state of the connection
 try:
-    client = mqttClient.Client(os.uname()[1])               #create new instance
-    client.username_pw_set(mqtt_user, password=mqtt_password)    #set username and password
-    client.on_connect= on_connect                      #attach function to callback
-    client.on_message= on_message                      #attach function to callback
-      
-    client.connect(mqtt_endpoint_host, port=mqtt_endpoint_port)          #connect to broker
-      
-    client.loop_start()        #start the loop
-      
-    while Connected != True:    #Wait for connection
-        time.sleep(0.1)
-      
-    client.subscribe("frigate/events")
-      
-    try:
-        while True:
-            time.sleep(1)
-      
-    except KeyboardInterrupt:
-        print("exiting")
-        client.disconnect()
-        client.loop_stop()
+
+    if debug_mode:
+            testimage = "/root/birdwatch/images/1648631391.374451-ubnk87.jpg"
+            while True:
+                inference(testimage)
+                time.sleep(5)
+                print('loop done')
+                logging.debug('loop done')
+    else:
+        client = mqttClient.Client(os.uname()[1])               #create new instance
+        client.username_pw_set(mqtt_user, password=mqtt_password)    #set username and password
+        client.on_connect= on_connect                      #attach function to callback
+        client.on_message= on_message                      #attach function to callback
+          
+        client.connect(mqtt_endpoint_host, port=mqtt_endpoint_port)          #connect to broker
+          
+        client.loop_start()        #start the loop
+          
+        while Connected != True:    #Wait for connection
+            time.sleep(0.1)
+          
+        client.subscribe("frigate/events")
+        
+        try:
+            while True:
+                time.sleep(1)
+          
+        except KeyboardInterrupt:
+            print("exiting")
+            client.disconnect()
+            client.loop_stop()
 
 except Exception as e:
     bot.send_message(chat_id=telegram_private, text='Bot crashed!', disable_notification=True)
-    logging.warning(str(e))
-    client.disconnect()
-    client.loop_stop()
+    logging.debug(str(e))
+    if not debug_mode:
+        client.disconnect()
+        client.loop_stop()
