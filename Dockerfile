@@ -15,9 +15,5 @@ RUN pip install paho-mqtt && pip install telegram && pip install python-telegram
 RUN apt install -y python3-pycoral git
 
 RUN git clone https://github.com/hendrikwegner/birdwatch.git
-
 WORKDIR /root/birdwatch
-
-RUN git pull
-
 CMD [ "/bin/sh", "./run.sh"]
