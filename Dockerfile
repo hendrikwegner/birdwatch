@@ -5,7 +5,7 @@ MAINTAINER Hendrik Wegner "mail@hendrikwegner.de"
 WORKDIR /root
 
 RUN echo "Europe/Stockholm" > /etc/timezone
-RUN apt install tzdata
+RUN apt install -y tzdata ntpdate
 RUN dpkg-reconfigure -f noninteractive tzdata
 
 RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | tee /etc/apt/sources.list.d/coral-edgetpu.list
