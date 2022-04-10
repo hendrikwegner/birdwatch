@@ -1,0 +1,80 @@
+<html>
+
+<head>
+    <style>
+        .entry {
+            position: relative;
+            display: inline-block;
+            min-width: 430px;
+            float: left;
+        }
+
+        .prediction {
+            position: absolute;
+            left: 180px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="/">
+            <h2>Model Trainer</h2>
+        </a>
+        <form action="/stats"><button>Model Stats:</button></form>
+        {% if stats %}
+        {{ stats }}
+        {% endif %}
+        <div class="predict">
+            <h3>Predict an image:</h3>
+            <form action="/predict" method="post" enctype="multipart/form-data">
+                <label>Select Image File:</label>
+                <input type="file" id="img" name="img" accept="image/*">
+                <input type="submit">
+            </form>
+            {% if results %}
+            {{ results }}
+            {% endif %}
+        </div>
+    </header>
+    <div class="wrapper">
+        <h3>Available images for training: {{data|length}}</h3>
+        {% for entry in data %}
+        <!--<pre>{{entry}}</pre>-->
+        <div class="entry">
+            <form method="post" action="/predict">
+                <input type="hidden" value={{ entry.url }} name="predict-testdata">
+                <button>predict</button>
+            </form>
+            {% if url %}
+            {% if url == entry.url %}
+            <span class="prediction">
+                {% for class in prediction.classes %}
+                {{ class.id }}: {{ class.score }}<br>
+
+                {% endfor %}
+            </span>
+            {% endif %}
+            {% endif %}
+            <form method="post" action="/train">
+                <input type="hidden" name="url" value={{ entry.url }}>
+                {% if "trainer.n147" in req %}
+                <img src={{ entry.url | replace("http://192.168.123.4:8070/","https://trainer.n147.ddnss.de/") }}>
+                {% else %}
+                <img src={{ entry.url }}>
+
+                {% endif %}
+
+
+                <button type="submit" name="label" value="Taube">Taube</button>
+                <button type="submit" name="label" value="Amsel">Amsel</button>
+                <button type="submit" name="label" value="Reiher">Reiher</button>
+                <button type="submit" name="label" value="remove">Entfernen</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+
+</html>

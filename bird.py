@@ -52,6 +52,7 @@ try:
         bot.send_message(chat_id=telegram_private, text='Testrun Starts', disable_notification=True)
         testimage = "/root/birdwatch/images/1648705663.60658-all9ja.jpg"
         check_results(inference(testimage), False)
+        check_results(inference(testimage), False)
         bot.send_message(chat_id=telegram_private, text='Testrun Finished', disable_notification=True)
 
     #mqtt connect
@@ -140,14 +141,13 @@ try:
 
     def check_results(results, send_alarm):
         for bird in results.items():
-            bot.send_message(chat_id=telegram_private, text=bird[0]+str(bird[1]), disable_notification=True)
             if bird[0] == 'image':
                 continue
             if "heron" in bird[0].lower() and bird[1] > 0.4:
                 #heron with score over 0.4
                 if send_alarm:
                     bot.send_photo(chat_id=telegram_group, photo=open(results['image'], 'rb'), caption='%s: %.5f' % (bird[0], bird[1]))
-            if "background" not in bird[0].lower():
+            if "background" not in bird[0].lower() and bird[1] > 0.25:
                 bot.send_photo(chat_id=telegram_private, photo=open(results['image'], 'rb'), caption='%s: %.5f' % (bird[0], bird[1]))
 
                 
