@@ -61,7 +61,8 @@ def on_message(client, userdata, message):
             continue
         if open(file,"rb").read() == open(image_unique,"rb").read():
             unique = False
-            #print("would remove file: " + file + " same as: " + image_unique)
+            print("remove file: " + file + " same as: " + image_unique)
+            db_images.remove(where('url') == "http://192.168.123.4:8070/static/"+file)
             os.remove(file)
 
     if unique:    
@@ -86,11 +87,20 @@ client.subscribe("frigate/events")
 def index():
     return render_template('index.html', data=db_images.search(where('label') == "bird"), req=request.url)
 
+@app.route('/stats')
+def stats():
+        r = requests.get('http://192.168.123.4:8083/classificationbox/models/birds/stats')
+        return render_template('index.html', data=db_images.search(where('label') == "bird"), req=request.url, stats=r.json())
+    
 
 @app.route('/train', methods = ['POST'])
 def train():
     url = request.form.get("url")
     label = request.form.get("label")
+
+    if label == "remove":
+        db_images.remove(Query().url == url)
+        return redirect(url_for('index'))
 
     r = requests.post('http://192.168.123.4:8083/classificationbox/models/birds/teach', json={
             "class": label,
